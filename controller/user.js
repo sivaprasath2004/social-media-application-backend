@@ -23,6 +23,19 @@ const login=async(req,res)=>{
     await mongoose.disconnect()
   }
 }
+async function searchResult(req,res){
+  console.log(req.body)
+  try {
+    await mongoose.connect(process.env.DB);
+    let val= await login_schema.find({user_name:req.body.val}) 
+    console.log(val)
+  } catch (error) {
+   console.error('Error connecting to MongoDB:', error);
+ }
+   finally{
+     await mongoose.disconnect()
+   }
+}
 const signup=async(req,res)=>{
   try {
      await mongoose.connect(process.env.DB);
@@ -57,4 +70,4 @@ const signup=async(req,res)=>{
       await mongoose.disconnect()
     }
 }
-module.exports={login,signup}
+module.exports={login,signup,searchResult}
