@@ -1,6 +1,7 @@
 require('dotenv').config();
 const mongoose=require('mongoose')
 const login_schema=require('../mongodb/loginschema')
+const follow=require('../mongodb/followingSchema')
 const login=async(req,res)=>{
    try {
    await mongoose.connect(process.env.DB);
@@ -58,6 +59,10 @@ const signup=async(req,res)=>{
         Des:req.body.Des,
         pass:req.body.pass
       })
+    await follow.create({
+      _id:user._id,
+      id:user._id
+    })
       res.status(200).send({res:"ok",user:user})
     }
   }
@@ -72,19 +77,40 @@ const signup=async(req,res)=>{
       await mongoose.disconnect()
     }
 }
+const following=async(req,res)=>{
+  try{
+    await mongoose.connect(process.env.DB);
+    let users=await login_schema.find({})
+    let arr=[]
+    users.map(item=>{
+        arr.push({
+          _id:item._id,
+          id:item.id,
+        })
+    })
+    await follow.insertMany(arr)
+    res.send("finish")
+  }
+  catch(err){
+    console.log(err)
+  }
+  finally{
+    await mongoose.disconnect()
+  }
+  }
 const followers=async(me,you,name)=>{
   try{
     console.log(me,you,name)
     await mongoose.connect(process.env.DB);
     let chattingId=me+you
-    let first=await login_schema.findById(me)
+    let first=await follow.findById(me)
     let following=first.following.filter(item=>item!==you)
     let fir_messages=first.messages.filter(item=>item!==chattingId)
     fir_messages.push(chattingId)
     following.push(you)
     first.messages=fir_messages
     first.following=following
-    let second=await login_schema.findById(you)
+    let second=await follow.findById(you)
     let followers=second.followers.filter(item=>item!==me)
     let sec_messages=second.messages.filter(item=>item!==chattingId)
     sec_messages.push(chattingId)
@@ -100,4 +126,4 @@ const followers=async(me,you,name)=>{
     await mongoose.disconnect()
   }
 }
-module.exports={login,signup,searchResult,followers}
+module.exports={login,signup,searchResult,followers,following}
