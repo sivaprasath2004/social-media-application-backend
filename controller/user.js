@@ -2,9 +2,21 @@ require('dotenv').config();
 const mongoose=require('mongoose')
 const login_schema=require('../mongodb/loginschema')
 const follow=require('../mongodb/followingSchema')
+// const profiles=async(req,res)=>{
+//   await mongoose.connect(process.env.DB);
+//    let val= await login_schema.find({}) 
+//    val.map(item=>{
+//     async function clear(){
+//       let res=await follow.findById(item._id)
+//       res.Des=item.Des
+//       await res.save()
+//     }
+//     clear()
+//    })
+// }
+mongoose.connect(process.env.DB, { useNewUrlParser: true, useUnifiedTopology: true });
 const login=async(req,res)=>{
    try {
-   await mongoose.connect(process.env.DB);
    let val= await login_schema.findOne({Email_id:req.body.email}) 
    if(val){
     if(val.pass===req.body.pass){
@@ -20,27 +32,20 @@ const login=async(req,res)=>{
 } catch (error) {
   console.error('Error connecting to MongoDB:', error);
 }
-  finally{
-    await mongoose.disconnect()
-  }
 }
 async function searchResult(req,res){
   console.log(req.body)
   try {
     await mongoose.connect(process.env.DB);
     const regex = new RegExp(`.*${req.body.val}.*`, 'i')
-    let val= await login_schema.find({user_name:regex}) 
+    let val= await follow.find({name:regex}) 
     res.status(200).send(val)
   } catch (error) {
    console.error('Error connecting to MongoDB:', error);
  }
-   finally{
-     await mongoose.disconnect()
-   }
 }
 const signup=async(req,res)=>{
   try {
-     await mongoose.connect(process.env.DB);
      if(req.body.name && req.body.username && req.body.email && req.body.pass){
    let val= await login_schema.findOne({Email_id:req.body.email}) 
    console.log(val)
@@ -61,7 +66,9 @@ const signup=async(req,res)=>{
       })
     await follow.create({
       _id:user._id,
-      id:user._id
+      id:user._id,
+      name:user.user_name,
+      Des:user.Des
     })
       res.status(200).send({res:"ok",user:user})
     }
@@ -73,57 +80,83 @@ const signup=async(req,res)=>{
   } catch (error) {
     console.error('Error connecting to MongoDB:', error);
   }
-    finally{
-      await mongoose.disconnect()
-    }
 }
 const following=async(req,res)=>{
   try{
-    await mongoose.connect(process.env.DB);
-    let users=await login_schema.find({})
-    let arr=[]
-    users.map(item=>{
-        arr.push({
-          _id:item._id,
-          id:item.id,
-        })
-    })
-    await follow.insertMany(arr)
-    res.send("finish")
+    let user_followers=await follow.findById(req.body.id)
+    let followers="no"
+    let followings="no"
+    if(req.body.section==="follow"){
+      if(user_followers.following.length>0){
+      followings=await follow.find({_id:{$in:user_followers.following}})
+      }
+     if(user_followers.followers.length>0){
+      followers=await follow.find({_id:{$in:user_followers.followers}})
+     }
+     res.status(200).send({followers:followers,followings:followings})
+    }
+    else{
+    res.status(200).send(user_followers)
+    }
   }
   catch(err){
     console.log(err)
-  }
-  finally{
-    await mongoose.disconnect()
   }
   }
 const followers=async(me,you,name)=>{
   try{
     console.log(me,you,name)
-    await mongoose.connect(process.env.DB);
     let chattingId=me+you
     let first=await follow.findById(me)
     let following=first.following.filter(item=>item!==you)
-    let fir_messages=first.messages.filter(item=>item!==chattingId)
+    let fir_messages=first.RoomId.filter(item=>item!==chattingId)
     fir_messages.push(chattingId)
+    first.notification=[{id:you,notify:"following"}]
     following.push(you)
-    first.messages=fir_messages
+    first.RoomId=fir_messages
     first.following=following
     let second=await follow.findById(you)
     let followers=second.followers.filter(item=>item!==me)
-    let sec_messages=second.messages.filter(item=>item!==chattingId)
+    let sec_messages=second.RoomId.filter(item=>item!==chattingId)
     sec_messages.push(chattingId)
+    second.notification=[
+      {id:me,notify:"followers"}
+    ]
     followers.push(me)
+    console.log(followers)
     second.followers=followers
-    second.messages=sec_messages
+    second.RoomId=sec_messages
+    second.notification_follow=true
    await first.save()
    await second.save()
    } catch (error) {
-  console.error('Error connecting to MongoDB:', error);
+  console.log('Error connecting to MongoDB:', error);
    }
-  finally{
-    await mongoose.disconnect()
-  }
 }
-module.exports={login,signup,searchResult,followers,following}
+const unfollow=async(me,you,text)=>{
+  let following
+  let follower
+  if(text==="Unfollow"){
+  following=me
+  follower=you
+  }
+  else{
+    following=you
+    follower=me
+  }
+  let following_user=await follow.findById(following)
+  let followings=following_user.following.filter(item=>item!==follower)
+  let follower_user=await follow.findById(follower)
+  let followers=follower_user.followers.filter(item=>item!==following)
+  following_user.following=followings
+  following_user.notification=[
+    {id:follower,notify:"unfollow"}
+  ]
+  follower_user.followers=followers
+  follower_user.notification=[
+    {id:following,notify:"remove"}
+  ]
+  await following_user.save()
+  await follower_user.save()
+}
+module.exports={login,signup,searchResult,followers,following,unfollow}
