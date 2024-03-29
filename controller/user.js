@@ -2,18 +2,8 @@ require('dotenv').config();
 const mongoose=require('mongoose')
 const login_schema=require('../mongodb/loginschema')
 const follow=require('../mongodb/followingSchema')
-// const profiles=async(req,res)=>{
-//   await mongoose.connect(process.env.DB);
-//    let val= await login_schema.find({}) 
-//    val.map(item=>{
-//     async function clear(){
-//       let res=await follow.findById(item._id)
-//       res.Des=item.Des
-//       await res.save()
-//     }
-//     clear()
-//    })
-// }
+const Time=require('./Time')
+
 mongoose.connect(process.env.DB, { useNewUrlParser: true, useUnifiedTopology: true });
 const login=async(req,res)=>{
    try {
@@ -105,37 +95,39 @@ const following=async(req,res)=>{
   }
 const followers=async(me,you,name)=>{
   try{
+    let time=Time()
     console.log(me,you,name)
     let chattingId=me+you
-    let first=await follow.findById(me)
-    let following=first.following.filter(item=>item!==you)
-    let fir_messages=first.RoomId.filter(item=>item!==chattingId)
-    fir_messages.push(chattingId)
-    first.notification=[{id:you,notify:"following"}]
-    following.push(you)
-    first.RoomId=fir_messages
-    first.following=following
     let second=await follow.findById(you)
     let followers=second.followers.filter(item=>item!==me)
-    let sec_messages=second.RoomId.filter(item=>item!==chattingId)
-    sec_messages.push(chattingId)
-    second.notification=[
-      {id:me,notify:"followers"}
-    ]
+    let second_roomId={id:me,roomId:chattingId}
+    let first_roomId={id:you,roomId:chattingId}
+    let second_notification=second.notification
+    second_notification.push({id:me,notify:"followers",name:name,time:time})
+    second.notification=second_notification
     followers.push(me)
     console.log(followers)
     second.followers=followers
-    second.RoomId=sec_messages
+    second.RoomId=second_roomId
     second.notification_follow=true
+    let first=await follow.findById(me)
+    let following=first.following.filter(item=>item!==you)
+    let first_notification=first.notification
+    first_notification.push({id:following,notify:"following",name:second.name,time:time})
+    first.notification=first_notification
+    following.push(you)
+    first.RoomId=first_roomId
+    first.following=following
    await first.save()
    await second.save()
    } catch (error) {
   console.log('Error connecting to MongoDB:', error);
    }
 }
-const unfollow=async(me,you,text)=>{
+const unfollow=async(me,you,name,text)=>{
   let following
   let follower
+  let time=Time()
   if(text==="Unfollow"){
   following=me
   follower=you
@@ -149,14 +141,32 @@ const unfollow=async(me,you,text)=>{
   let follower_user=await follow.findById(follower)
   let followers=follower_user.followers.filter(item=>item!==following)
   following_user.following=followings
-  following_user.notification=[
-    {id:follower,notify:"unfollow"}
-  ]
+  let following_notification=following_user.notification
+  following_notification.push({id:follower,notify:"unfollow",name:follower_user.name,time:time})
+  following_user.notification=following_notification
   follower_user.followers=followers
-  follower_user.notification=[
-    {id:following,notify:"remove"}
-  ]
+  let follower_notification=follower_user.notification
+  follower_notification.push({id:following,notify:"remove",name:following_user.name,time:time})
+  follower_user.notification=follower_notification
   await following_user.save()
   await follower_user.save()
 }
-module.exports={login,signup,searchResult,followers,following,unfollow}
+const userId=async(req,res)=>{
+  try{
+  let user=await follow.findById(req.body.id)
+  res.status(200).send(user)
+  }
+  catch(err){
+    console.log(err)
+  }
+}
+const deleteNotification=async(req,res)=>{
+  let user=await follow.findById(req.body.id)
+  console.log(req.body.item)
+  let msg=user.notification.filter(ele=>ele.time!==req.body.item.time)
+  user.notification=msg
+  console.log(msg)
+  await user.save()
+  res.status(200).send("ok")
+}
+module.exports={login,signup,searchResult,followers,following,unfollow,userId,deleteNotification}

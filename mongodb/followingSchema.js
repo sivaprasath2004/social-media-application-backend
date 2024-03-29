@@ -5,10 +5,17 @@ const followers=new mongoose.Schema({
     notification:[
         {
          id:String,
-         notify:String
+         notify:String,
+         name:String,
+         time:String
         }
     ],
-    RoomId:[String],
+    RoomId:[
+        {
+        id:String,
+        roomId:String
+        }
+],
     id:String,
     name:String,
     url:String,

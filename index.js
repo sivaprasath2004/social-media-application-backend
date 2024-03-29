@@ -7,7 +7,7 @@ const socketio=require('socket.io')
 const io=socketio(server,{cors:{origin:'*'}})
 const bodyParser=require('body-parser')
 const cors=require('cors')
-const {login,signup,searchResult,followers,following,unfollow}=require('./controller/user')
+const {login,signup,searchResult,followers,following,unfollow,userId,deleteNotification}=require('./controller/user')
 app.use(cors())
 app.use(express.json())
 app.use(bodyParser.urlencoded({extended:true}))
@@ -16,6 +16,8 @@ app.post('/signup',signup)
 app.post('/followings',following)
 app.post('/searchResult',searchResult)
 app.post('/login',login)
+app.post('/userId',userId)
+app.post('/deleteMessage',deleteNotification)
 io.on('connect',socket=>{
     socket.on('join',({me,name},callBack)=>{
         socket.join(me)
@@ -25,7 +27,7 @@ io.on('connect',socket=>{
         console.log("commed")
     }
     socket.on('unfollow',({me,you,name,text},callBack)=>{
-       unfollow(me,you,text)
+       unfollow(me,you,name,text)
        unfollowed(me,you,name,text)
        callBack("done")
     })
