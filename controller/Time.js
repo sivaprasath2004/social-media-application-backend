@@ -23,7 +23,9 @@ const Time = () => {
   const second = seconds < 10 ? "0" + seconds : seconds;
   const ampm = hours >= 12 ? "PM" : "AM";
   hours = hours % 12 || 12;
-  const formattedDateTime = `${hours}:${minutes}.${second} ${ampm}/${day}-${month}-${year}`;
+  const formattedDateTime = `${hours < 10 ? "0" + hours : hours}:${
+    minutes < 10 ? "0" + minutes : minutes
+  } ${ampm}/${day}-${month}-${year}`;
   console.log("Current date and time:", formattedDateTime);
   return formattedDateTime;
 };

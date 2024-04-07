@@ -190,27 +190,7 @@ const deleteNotification = async (req, res) => {
   await user.save();
   res.status(200).send("ok");
 };
-const roomId_creater = async (req, res) => {
-  try {
-    console.log("worked");
-    let user = await follow.findById(req.body.id);
-    let search = user.RoomId.find((item) => item.id === req.body.user);
-    if (search) {
-      res.status(200).send(user);
-    } else {
-      user.RoomId.push({
-        id: req.body.user,
-        roomId: req.body.id + req.body.user,
-      });
-      console.log("how many times");
-      await user.save();
-      res.status(200).send(user);
-    }
-  } catch (error) {
-    console.error("Error in roomId function:", error);
-    res.status(500).send("Internal Server Error");
-  }
-};
+
 const checkId = async (req, res) => {
   let re = await follow.findById(req.body.id);
   let room = re.RoomId.find((ele) => ele.id === req.body.user);
@@ -225,6 +205,5 @@ module.exports = {
   unfollow,
   userId,
   deleteNotification,
-  roomId_creater,
   checkId,
 };

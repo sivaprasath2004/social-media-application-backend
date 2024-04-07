@@ -7,7 +7,12 @@ const socketio = require("socket.io");
 const io = socketio(server, { cors: { origin: "*" } });
 const bodyParser = require("body-parser");
 const cors = require("cors");
-const { msg_notification, messagersfind } = require("./controller/message");
+const {
+  msg_notification,
+  messagersfind,
+  roomId_creater,
+  chattings,
+} = require("./controller/message");
 const {
   login,
   signup,
@@ -17,7 +22,6 @@ const {
   unfollow,
   userId,
   deleteNotification,
-  roomId_creater,
   checkId,
 } = require("./controller/user");
 const Time = require("./controller/Time");
@@ -34,24 +38,29 @@ app.post("/deleteMessage", deleteNotification);
 app.post("/room", roomId_creater);
 app.post("/mys", checkId);
 app.post("/messagers", messagersfind);
+app.post("/chattings", chattings);
 io.on("connect", (socket) => {
   socket.on("join", ({ me, name }, callBack) => {
     socket.join(me);
-    callBack("connected");
   });
   function unfollowed(me, you, name, text) {
     io.to(you).emit("follower", { me: you, you: me, name: name, text: text });
     console.log("commed");
   }
-  socket.on("room", ({ id, user }, callBack) => {
-    socket.join(id.roomId);
+  socket.on("room", ({ id }, callBack) => {
+    socket.join(id);
     callBack("connected");
   });
+  let count;
   socket.on("message", ({ id, user, roomid, name, text }, callBack) => {
+    count = 1;
     let time = Time();
+    if (count === 1) {
+      io.to(roomid).emit("Messgaes", { id, user, roomid, name, text, time });
+      count += 1;
+    }
     msg_notification(id, user, roomid, name, text);
     unfollowed(id, user, roomid, text);
-    io.to(roomid).emit("Messgaes", { id, user, roomid, name, text, time });
     unfollowed(user, id, roomid, text);
     callBack("done");
   });
