@@ -28,6 +28,11 @@ const Time = require("./controller/Time");
 app.use(cors());
 app.use(express.json());
 app.use(bodyParser.urlencoded({ extended: true }));
+app.use((err, req, res, next) => {
+  console.error(err.stack);
+  res.status(500).send("Something broke!");
+});
+
 app.get("/", (req, res) => res.send("How Can I Help U..."));
 app.post("/signup", signup);
 app.post("/followings", following);
@@ -74,5 +79,8 @@ io.on("connect", (socket) => {
     unfollowed(me, you, name, "following");
     callBack("done");
   });
+});
+server.on("error", (error) => {
+  console.error("Server error:", error);
 });
 server.listen(5000, () => console.log("app listen in 5000"));

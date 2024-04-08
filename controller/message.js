@@ -32,7 +32,7 @@ const msg_notification = async (id, user, roomid, name, text) => {
   let time = Time();
   let users = await follow.findById(user);
   let search = users.RoomId.filter((item) => item.id !== id);
-  search.push({ id: user._id, roomId: roomid });
+  search.push({ id: id, roomId: roomid });
   users.RoomId = search;
   let me = await follow.findById(id);
   let me_search = me.RoomId.filter((item) => item.id !== user._id);
