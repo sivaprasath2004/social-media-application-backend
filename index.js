@@ -50,7 +50,6 @@ io.on("connect", (socket) => {
   });
   function unfollowed(me, you, name, text) {
     io.to(you).emit("follower", { me: you, you: me, name: name, text: text });
-    console.log("commed");
   }
   socket.on("room", ({ id }, callBack) => {
     socket.join(id);

@@ -9,7 +9,6 @@ mongoose.connect(process.env.DB, {
 });
 const roomId_creater = async (req, res) => {
   try {
-    console.log("worked");
     let user = await follow.findById(req.body.id);
     let search = user.RoomId.find((item) => item.id === req.body.user);
     if (search) {
@@ -19,7 +18,6 @@ const roomId_creater = async (req, res) => {
         id: req.body.user,
         roomId: req.body.id + req.body.user,
       });
-      console.log("how many times");
       await user.save();
       res.status(200).send(user);
     }
@@ -70,8 +68,6 @@ const messagersfind = async (req, res) => {
   res.status(200).send(orderedResult.reverse());
 };
 const chattings = async (req, res) => {
-  console.log("how many times");
-  console.log(req.body.id);
   let result = await chats.findOne({ id: req.body.id });
   if (result) {
     res.json(result);

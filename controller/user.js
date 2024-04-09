@@ -90,12 +90,12 @@ const following = async (req, res) => {
     let followers = "no";
     let followings = "no";
     if (req.body.section === "follow") {
-      if (user_followers.following.length > 0) {
+      if (user_followers?.following) {
         followings = await follow.find({
           _id: { $in: user_followers.following },
         });
       }
-      if (user_followers.followers.length > 0) {
+      if (user_followers?.followers) {
         followers = await follow.find({
           _id: { $in: user_followers.followers },
         });

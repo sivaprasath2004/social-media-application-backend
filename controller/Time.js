@@ -26,7 +26,6 @@ const Time = () => {
   const formattedDateTime = `${hours < 10 ? "0" + hours : hours}:${
     minutes < 10 ? "0" + minutes : minutes
   } ${ampm}/${day}-${month}-${year}`;
-  console.log("Current date and time:", formattedDateTime);
   return formattedDateTime;
 };
 module.exports = Time;
