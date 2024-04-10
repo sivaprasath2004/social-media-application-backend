@@ -4,12 +4,6 @@ const app = express();
 const http = require("http");
 const server = http.createServer(app);
 const socketio = require("socket.io");
-const io = socketio(server, { 
-  cors: { 
-    origin: 'http://localhost:3000',
-    methods: ["GET", "POST"] 
-  } 
-});
 const bodyParser = require("body-parser");
 const cors = require("cors");
 const {
@@ -34,6 +28,12 @@ const allowedOrigins = ['http://localhost:3000'];
 app.use(cors({
   origin: allowedOrigins
 }));
+const io = socketio(server, { 
+  cors: { 
+    origin: allowedOrigins,
+    methods: ["GET", "POST"] 
+  } 
+});
 app.use(express.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use((err, req, res, next) => {
