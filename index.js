@@ -28,15 +28,7 @@ const allowedOrigins = ['http://localhost:3000','https://social-media-applicatio
 app.use(cors({
   origin: allowedOrigins
 }));
-const io = socketio(server, { 
-  wssEngine:['ws','wss'],
-  transports:['websocket','polling'],
-  cors: { 
-    origin: allowedOrigins,
-    methods: ["GET", "POST"],
-  },
-  allowEIO3:true,
-});
+const io = socketio(server);
 app.use(express.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use((err, req, res, next) => {
