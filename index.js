@@ -24,7 +24,7 @@ const {
   checkId,
 } = require("./controller/user");
 const Time = require("./controller/Time");
-const allowedOrigins = ['http://localhost:3000,https://social-media-application-sigma.vercel.app'];
+const allowedOrigins = ['http://localhost:3000','https://social-media-application-sigma.vercel.app'];
 app.use(cors({
   origin: allowedOrigins
 }));
