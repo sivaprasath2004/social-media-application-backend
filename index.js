@@ -25,7 +25,12 @@ const {
 } = require("./controller/user");
 const Time = require("./controller/Time");
 app.use(cors());
-const io = socketio(server, { cors: { origin: "*" } });
+const io = socketio(server, { 
+    cors: { 
+        origin: "http://localhost:3000", // or specific origin
+        methods: ["GET", "POST"] // specify the allowed methods
+    } 
+});
 app.use(express.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use((err, req, res, next) => {
