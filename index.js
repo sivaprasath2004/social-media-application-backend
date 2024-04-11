@@ -25,6 +25,16 @@ const {
 } = require("./controller/user");
 const Time = require("./controller/Time");
 app.use(cors());
+app.use((req, res, next) => {
+    const authToken = req.headers.authorization;
+   if (authToken && authToken === 'SIVAPRASATH2004') {
+        // Authentication successful
+        next(); // Continue to the next middleware/route handler
+    } else {
+        // Authentication failed
+        return res.status(401).json({ error: 'Unauthorized' });
+    }
+});
 const io = socketio(server, { 
     cors: { 
         origin: "http://localhost:3000", // or specific origin
