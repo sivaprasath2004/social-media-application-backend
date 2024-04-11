@@ -31,16 +31,6 @@ const io = socketio(server, {
     } 
 });
 app.use(cors());
-app.use((req, res, next) => {
-    const authToken = req.headers.authorization;
-   if (authToken && authToken === 'SIVAPRASATH2004') {
-        // Authentication successful
-        next(); // Continue to the next middleware/route handler
-    } else {
-        // Authentication failed
-        return res.status(401).json({ error: 'Unauthorized' });
-    }
-});
 app.use(express.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use((err, req, res, next) => {
