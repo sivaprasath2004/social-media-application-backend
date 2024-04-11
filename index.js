@@ -27,7 +27,7 @@ const Time = require("./controller/Time");
 app.use(cors());
 const io = socketio(server, { 
     cors: { 
-        origin: "https://6617f3d809a707133df4b55a--roaring-sherbet-0307a4.netlify.app", // or specific origin
+        origin: "https://zodia.netlify.app", // or specific origin
         methods: ["GET", "POST"] // specify the allowed methods
     } 
 });
