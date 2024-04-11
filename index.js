@@ -24,7 +24,7 @@ const {
   checkId,
 } = require("./controller/user");
 const Time = require("./controller/Time");
-app.use(cors({ origin: 'http://localhost:3000' }));
+app.use(cors());
 const io = socketio(server, { 
     cors: { 
         origin: "http://localhost:3000", // or specific origin
