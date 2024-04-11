@@ -30,7 +30,7 @@ const io = socketio(server, {
         methods: ["GET", "POST"] // specify the allowed methods
     } 
 });
-app.use(cors());
+app.use(cors({ origin: 'http://localhost:3000' }));
 app.use(express.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use((err, req, res, next) => {
