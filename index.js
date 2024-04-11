@@ -24,12 +24,8 @@ const {
   checkId,
 } = require("./controller/user");
 const Time = require("./controller/Time");
-const allowedOrigins = ['http://localhost:3000','https://social-media-application-sigma.vercel.app'];
-app.use(cors({
-  origin: allowedOrigins,
-  methods: ['GET', 'POST'],
-}));
-const io = socketio(server);
+app.use(cors());
+const io = socketio(server, { cors: { origin: "*" } });
 app.use(express.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use((err, req, res, next) => {

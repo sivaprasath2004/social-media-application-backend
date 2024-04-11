@@ -121,7 +121,6 @@ const followers = async (me, you, name) => {
       name: name,
       time: time,
     });
-    second.notification = second_notification;
     followers.push(me);
     console.log(followers);
     second.followers = followers;
