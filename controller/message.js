@@ -9,15 +9,20 @@ mongoose.connect(process.env.DB, {
 });
 const roomId_creater = async (req, res) => {
   try {
+    console.log("id", req.body.id);
     let user = await follow.findById(req.body.id);
-    let search = user.RoomId.find((item) => item.id === req.body.user);
+    console.log("user", user);
+    let search = user?.RoomId?.find((item) => item?.id === req.body.user);
     if (search) {
       res.status(200).send(user);
     } else {
-      user.RoomId.push({
+      let rooms = user.RoomId !== null ? user.RoomId : [];
+      rooms.push({
         id: req.body.user,
         roomId: req.body.id + req.body.user,
       });
+      console.log(rooms);
+      user.RoomId = rooms;
       await user.save();
       res.status(200).send(user);
     }
@@ -37,7 +42,7 @@ const msg_notification = async (id, user, roomid, name, text) => {
   me_search.push({ id: user, roomId: roomid });
   me.RoomId = me_search;
   users.notification.push({
-    id: user._id,
+    id: id,
     notify: "message",
     name: text,
     time: time,

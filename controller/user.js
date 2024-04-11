@@ -184,7 +184,9 @@ const unfollow = async (me, you, name, text) => {
 const deleteNotification = async (req, res) => {
   let user = await follow.findById(req.body.id);
   console.log(req.body.item);
-  let msg = user.notification.filter((ele) => ele.time !== req.body.item.time);
+  let msg = user.notification.filter(
+    (ele) => ele.id !== req.body.item.id && ele.notify !== req.body.item.notify
+  );
   user.notification = msg;
   console.log(msg);
   await user.save();
