@@ -52,7 +52,7 @@ app.use(express.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 
 // ── REST routes ─────────────────────────────────────────────────────────────
-app.get("/", (req, res) => res.send("How Can I Help U..."));
+app.get("/", (req, res) => res.send("How Can I Help U.....=>"));
 app.post("/signup", signup);
 app.post("/followings", following);
 app.post("/searchResult", searchResult);
