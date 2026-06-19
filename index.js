@@ -6,6 +6,8 @@ const server = http.createServer(app);
 const socketio = require("socket.io");
 const bodyParser = require("body-parser");
 const cors = require("cors");
+const mongoose = require("mongoose");
+
 const {
   msg_notification,
   messagersfind,
@@ -24,20 +26,32 @@ const {
   checkId,
 } = require("./controller/user");
 const Time = require("./controller/Time");
-app.use(cors());
-const io = socketio(server, { 
-    cors: { 
-        origin: "https://zodia.vercel.app", // or specific origin
-        methods: ["GET", "POST"] // specify the allowed methods
-    } 
-});
-app.use(express.json());
-app.use(bodyParser.urlencoded({ extended: true }));
-app.use((err, req, res, next) => {
-  console.error(err.stack);
-  res.status(500).send("Something broke!");
+
+// ── single DB connection for the whole app ──────────────────────────────────
+mongoose
+  .connect(process.env.DB)
+  .then(() => console.log("MongoDB connected"))
+  .catch((err) => console.error("MongoDB connection error:", err));
+
+app.use(
+  cors({
+    origin: ["https://zodia.vercel.app", "http://localhost:3000"],
+    credentials: true,
+  })
+);
+
+const io = socketio(server, {
+  cors: {
+    origin: ["https://zodia.vercel.app", "http://localhost:3000"],
+    methods: ["GET", "POST"],
+    credentials: true,
+  },
 });
 
+app.use(express.json());
+app.use(bodyParser.urlencoded({ extended: true }));
+
+// ── REST routes ─────────────────────────────────────────────────────────────
 app.get("/", (req, res) => res.send("How Can I Help U..."));
 app.post("/signup", signup);
 app.post("/followings", following);
@@ -49,42 +63,76 @@ app.post("/room", roomId_creater);
 app.post("/mys", checkId);
 app.post("/messagers", messagersfind);
 app.post("/chattings", chattings);
-io.on("connect", (socket) => {
-  socket.on("join", ({ me, name }, callBack) => {
+
+// ── Socket.IO ────────────────────────────────────────────────────────────────
+// Track userId → socketId so we can reach offline-joined rooms
+const userSockets = {};
+
+io.on("connection", (socket) => {
+  // User joins their own "personal" room for notifications
+  socket.on("join", ({ me, name }, cb) => {
+    if (!me) return;
     socket.join(me);
+    userSockets[me] = socket.id;
+    if (typeof cb === "function") cb("joined");
   });
-  function unfollowed(me, you, name, text) {
-    io.to(you).emit("follower", { me: you, you: me, name: name, text: text });
-  }
-  socket.on("room", ({ id }, callBack) => {
+
+  // User joins a chat room
+  socket.on("room", ({ id }, cb) => {
+    if (!id) return;
     socket.join(id);
-    callBack("connected");
+    if (typeof cb === "function") cb("connected");
   });
-  let count;
-  socket.on("message", ({ id, user, roomid, name, text }, callBack) => {
-    count = 1;
-    let time = Time();
-    if (count === 1) {
-      io.to(roomid).emit("Messgaes", { id, user, roomid, name, text, time });
-      count += 1;
+
+  // Incoming chat message
+  socket.on("message", async ({ id, user, roomid, name, text }, cb) => {
+    if (!id || !user || !roomid || !text) return;
+    const time = Time();
+    const userId = typeof user === "object" ? user._id : user;
+
+    // Broadcast to everyone in the room (including sender tab)
+    io.to(roomid).emit("Messages", { id, user: userId, roomid, name, text, time });
+
+    // Persist & notify
+    try {
+      await msg_notification(id, userId, roomid, name, text);
+    } catch (e) {
+      console.error("msg_notification error:", e.message);
     }
-    msg_notification(id, user, roomid, name, text);
-    unfollowed(id, user, roomid, text);
-    unfollowed(user, id, roomid, text);
-    callBack("done");
+
+    // Notify both participants via their personal rooms
+    io.to(userId).emit("follower", { me: userId, you: id, name, text });
+    io.to(id).emit("follower", { me: id, you: userId, name, text });
+
+    if (typeof cb === "function") cb("done");
   });
-  socket.on("unfollow", ({ me, you, name, text }, callBack) => {
+
+  socket.on("unfollow", ({ me, you, name, text }, cb) => {
     unfollow(me, you, name, text);
-    unfollowed(me, you, name, text);
-    callBack("done");
+    io.to(you).emit("follower", { me: you, you: me, name, text });
+    io.to(me).emit("follower", { me, you, name, text });
+    if (typeof cb === "function") cb("done");
   });
-  socket.on("follow", ({ me, you, name }, callBack) => {
+
+  socket.on("follow", ({ me, you, name }, cb) => {
     followers(me, you, name);
-    unfollowed(me, you, name, "following");
-    callBack("done");
+    io.to(you).emit("follower", { me: you, you: me, name, text: "following" });
+    if (typeof cb === "function") cb("done");
+  });
+
+  socket.on("disconnect", () => {
+    // Clean up userSockets map
+    for (const [uid, sid] of Object.entries(userSockets)) {
+      if (sid === socket.id) delete userSockets[uid];
+    }
   });
 });
-server.on("error", (error) => {
-  console.error("Server error:", error);
+
+// ── Global error handler ─────────────────────────────────────────────────────
+app.use((err, req, res, next) => {
+  console.error(err.stack);
+  res.status(500).send("Something broke!");
 });
+
+server.on("error", (error) => console.error("Server error:", error));
 server.listen(8000, () => console.log("app listen in 8000"));
