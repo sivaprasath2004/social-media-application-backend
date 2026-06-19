@@ -35,14 +35,14 @@ mongoose
 
 app.use(
   cors({
-    origin: ["https://zodia.vercel.app", "http://localhost:3000"],
+      origin: "*",
     credentials: true,
   })
 );
 
 const io = socketio(server, {
   cors: {
-    origin: ["https://zodia.vercel.app", "http://localhost:3000"],
+      origin: "*",
     methods: ["GET", "POST"],
     credentials: true,
   },
